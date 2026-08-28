@@ -42,8 +42,9 @@ document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click",
 
 async function getActiveHhTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id || !/^https:\/\/([a-z0-9-]+\.)?hh\.ru\/vacancy\//i.test(tab.url || "")) {
-    throw new Error("Откройте страницу нужной вакансии на hh.ru.");
+  const supportedPage = /^https:\/\/([a-z0-9-]+\.)?hh\.ru\/(vacancy\/|applicant\/vacancy_response(?:\?|$))/i;
+  if (!tab?.id || !supportedPage.test(tab.url || "")) {
+    throw new Error("Откройте вакансию или анкету отклика на hh.ru.");
   }
   return tab;
 }
