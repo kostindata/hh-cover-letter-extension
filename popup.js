@@ -132,7 +132,7 @@ function renderResumes() {
     item.className = "resume-item";
     const icon = document.createElement("span");
     icon.className = "file-icon";
-    icon.textContent = "TXT";
+    icon.textContent = resume.formatLabel || ResumeParser.formatLabels[resume.format] || "TXT";
     const details = document.createElement("div");
     const name = document.createElement("strong");
     name.textContent = resume.name;
@@ -179,13 +179,19 @@ $("#resume-file").addEventListener("change", async (event) => {
   if (!files.length) return;
   try {
     for (const file of files) {
-      if (!file.name.toLowerCase().endsWith(".txt") && file.type !== "text/plain") throw new Error(`«${file.name}» не является TXT-файлом.`);
-      if (file.size > 1024 * 1024) throw new Error(`«${file.name}» больше 1 МБ.`);
-      const text = (await file.text()).replace(/\u0000/g, "").trim();
-      if (!text) throw new Error(`«${file.name}» пуст.`);
+      setStatus(`Читаю «${file.name}»…`);
+      const parsed = await ResumeParser.parse(file);
+      const text = parsed.text.replace(/\u0000/g, "").trim();
       const totalSize = new Blob([...state.resumes.map((resume) => resume.text), text]).size;
       if (totalSize > 5 * 1024 * 1024) throw new Error("Общий размер резюме не должен превышать 5 МБ.");
-      const resume = { id: crypto.randomUUID(), name: file.name, text, updatedAt: Date.now() };
+      const resume = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        text,
+        format: parsed.format,
+        formatLabel: parsed.formatLabel,
+        updatedAt: Date.now()
+      };
       state.resumes.push(resume);
       state.lastResumeId = resume.id;
     }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Сопроводительное письмо для hh.ru",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Создаёт сопроводительное письмо по вакансии и выбранному резюме через API пользователя.",
   "permissions": ["storage", "clipboardWrite", "activeTab"],
   "host_permissions": [

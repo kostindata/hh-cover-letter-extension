@@ -41,10 +41,10 @@
       </section>
 
       <section class="panel" data-panel="resumes">
-        <div class="section-heading"><div><h2>Мои резюме</h2><p>Только TXT, до 1 МБ на файл</p></div></div>
+        <div class="section-heading"><div><h2>Мои резюме</h2><p>TXT, PDF, DOC или DOCX — до 10 МБ</p></div></div>
         <label class="upload">
-          <input id="resume-file" type="file" accept=".txt,text/plain" multiple />
-          <span class="upload-icon">＋</span><strong>Загрузить TXT-резюме</strong><small>Файлы хранятся локально в расширении</small>
+          <input id="resume-file" type="file" accept=".txt,.pdf,.doc,.docx,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple />
+          <span class="upload-icon">＋</span><strong>Загрузить резюме</strong><small>Текст извлекается и хранится локально</small>
         </label>
         <div id="resume-list" class="resume-list"></div>
         <p id="resume-empty" class="empty">Пока нет загруженных резюме.</p>
@@ -65,6 +65,9 @@
 
       <p id="status" class="status" role="status"></p>
     </main>
+    <script src="vendor/mammoth.browser.min.js"></script>
+    <script src="vendor/doc-to-text.js"></script>
+    <script src="resume-parser.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
