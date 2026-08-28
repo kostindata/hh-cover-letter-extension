@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Сопроводительное письмо для hh.ru",
+  "version": "2.0.0",
+  "description": "Создаёт сопроводительное письмо по вакансии и выбранному резюме через API пользователя.",
+  "permissions": ["storage", "clipboardWrite", "activeTab"],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://api.openrouter.ai/*",
+    "https://api.deepseek.com/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Создать сопроводительное письмо",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://hh.ru/vacancy/*", "https://*.hh.ru/vacancy/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

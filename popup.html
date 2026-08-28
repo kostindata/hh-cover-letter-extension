@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Письмо для hh.ru</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <div class="logo" aria-hidden="true">хехе</div>
+        <div><h1>Сопроводительное письмо</h1><p>По вакансии и вашему резюме</p></div>
+      </header>
+
+      <nav class="tabs" aria-label="Разделы">
+        <button class="tab active" type="button" data-tab="generate">Генерация</button>
+        <button class="tab" type="button" data-tab="resumes">Резюме <span id="resume-count">0</span></button>
+        <button class="tab" type="button" data-tab="api">API</button>
+      </nav>
+
+      <section class="panel active" data-panel="generate">
+        <div id="vacancy-card" class="vacancy-card"><span class="dot"></span><div><strong>Проверяю страницу…</strong><small></small></div></div>
+        <form id="generate-form">
+          <label>Резюме<select id="resume-select"><option value="">Сначала загрузите резюме</option></select></label>
+          <div class="row">
+            <label>Тон<select id="tone"><option value="business">Деловой</option><option value="friendly">Дружелюбный</option><option value="concise">Краткий</option></select></label>
+            <label>API и модель<button id="api-summary" class="field-button" type="button">Настроить API</button></label>
+          </div>
+          <label>Дополнительные пожелания <span class="optional">необязательно</span>
+            <textarea id="extra-instructions" rows="2" maxlength="2000" placeholder="Например: подчеркни опыт управления командой"></textarea>
+          </label>
+          <button id="generate" class="primary" type="submit"><span class="button-label">Создать и вставить</span><span class="spinner" hidden></span></button>
+        </form>
+
+        <section id="result" class="result" hidden>
+          <div class="section-heading"><strong>Готовый текст</strong><span id="counter"></span></div>
+          <textarea id="letter" rows="11" aria-label="Готовое сопроводительное письмо"></textarea>
+          <div class="actions"><button id="copy" type="button">Копировать</button><button id="insert" type="button">Вставить в форму</button></div>
+        </section>
+      </section>
+
+      <section class="panel" data-panel="resumes">
+        <div class="section-heading"><div><h2>Мои резюме</h2><p>Только TXT, до 1 МБ на файл</p></div></div>
+        <label class="upload">
+          <input id="resume-file" type="file" accept=".txt,text/plain" multiple />
+          <span class="upload-icon">＋</span><strong>Загрузить TXT-резюме</strong><small>Файлы хранятся локально в расширении</small>
+        </label>
+        <div id="resume-list" class="resume-list"></div>
+        <p id="resume-empty" class="empty">Пока нет загруженных резюме.</p>
+      </section>
+
+      <section class="panel" data-panel="api">
+        <div class="section-heading"><div><h2>Настройки API</h2><p>Ключ хранится локально на этом устройстве</p></div></div>
+        <form id="api-form">
+          <label>Провайдер<select id="provider"><option value="openai">OpenAI API</option><option value="openrouter">OpenRouter API</option><option value="deepseek">DeepSeek API</option><option value="anthropic">Claude API (Anthropic)</option></select></label>
+          <label>API-ключ
+            <div class="secret-field"><input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Вставьте API-ключ" /><button id="toggle-key" type="button" aria-label="Показать API-ключ">Показать</button></div>
+          </label>
+          <label>Модель<input id="model" list="model-options" autocomplete="off" spellcheck="false" placeholder="Введите ID модели" /><datalist id="model-options"></datalist><span class="hint">Можно выбрать предложенную модель или ввести любой ID вручную.</span></label>
+          <button class="primary" type="submit">Сохранить настройки</button>
+        </form>
+        <div class="security-note"><strong>Важно</strong><p>Резюме и вакансия отправляются выбранному API-провайдеру. Не используйте ключ с избыточными правами или без лимита расходов.</p></div>
+      </section>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
