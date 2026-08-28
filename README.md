@@ -1,0 +1,2 @@
+# hh-cover-letter-extension
+.
