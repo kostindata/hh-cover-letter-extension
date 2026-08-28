@@ -31,7 +31,11 @@
   async function extractPdf(arrayBuffer) {
     const pdfjs = await import(chrome.runtime.getURL("vendor/pdf.min.mjs"));
     pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL("vendor/pdf.worker.min.mjs");
-    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      isEvalSupported: false,
+      useWorkerFetch: false
+    });
     let pdf;
     try {
       pdf = await loadingTask.promise;

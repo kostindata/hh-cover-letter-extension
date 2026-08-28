@@ -1,6 +1,15 @@
 const MODEL_OPTIONS = {
   openai: ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol", "gpt-4.1-mini"],
-  openrouter: ["openai/gpt-4o-mini", "anthropic/claude-sonnet-4.6", "deepseek/deepseek-v4-flash", "google/gemini-2.5-flash"],
+  openrouter: [
+    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v3.2",
+    "deepseek/deepseek-chat",
+    "deepseek/deepseek-r1",
+    "openai/gpt-4o-mini",
+    "anthropic/claude-sonnet-4.6",
+    "google/gemini-2.5-flash"
+  ],
   deepseek: ["deepseek-v4-flash", "deepseek-v4-pro"],
   anthropic: ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"]
 };
@@ -22,6 +31,8 @@ const state = {
   lastResumeId: "",
   vacancy: null
 };
+
+const isResumeManager = new URLSearchParams(location.search).get("page") === "resumes";
 
 const $ = (selector) => document.querySelector(selector);
 const status = $("#status");
@@ -174,6 +185,13 @@ async function deleteResume(id) {
   setStatus("Резюме удалено.", "success");
 }
 
+$("#resume-file").addEventListener("click", async (event) => {
+  if (isResumeManager) return;
+  event.preventDefault();
+  await chrome.tabs.create({ url: chrome.runtime.getURL("popup.html?page=resumes") });
+  window.close();
+});
+
 $("#resume-file").addEventListener("change", async (event) => {
   const files = [...event.target.files];
   if (!files.length) return;
@@ -224,7 +242,7 @@ $("#generate-form").addEventListener("submit", async (event) => {
   const resume = state.resumes.find((item) => item.id === $("#resume-select").value);
   const { provider, configs } = state.apiSettings;
   const api = { provider, ...configs[provider] };
-  if (!resume) return setStatus("Загрузите и выберите TXT-резюме.", "error");
+  if (!resume) return setStatus("Загрузите и выберите резюме.", "error");
   if (!api.apiKey || !api.model) { switchTab("api"); return setStatus("Настройте API-ключ и модель.", "error"); }
 
   setBusy(true);
@@ -283,6 +301,11 @@ async function loadVacancy() {
 }
 
 async function init() {
+  if (location.protocol !== "chrome-extension:" || !globalThis.chrome?.storage?.local) {
+    $("#resume-file").disabled = true;
+    setStatus("Откройте установленное расширение через его значок в Chrome. При прямом открытии popup.html загрузка файлов недоступна.", "error");
+    return;
+  }
   const saved = await chrome.storage.local.get(["apiSettings", "resumes", "lastResumeId", "generationSettings"]);
   state.apiSettings = mergeApiSettings(saved.apiSettings);
   state.resumes = Array.isArray(saved.resumes) ? saved.resumes : [];
@@ -291,6 +314,7 @@ async function init() {
   $("#extra-instructions").value = saved.generationSettings?.extraInstructions || "";
   renderApiFields();
   renderResumes();
+  if (isResumeManager) switchTab("resumes");
   await loadVacancy();
 }
 

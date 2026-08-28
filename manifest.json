@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Сопроводительное письмо для hh.ru",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Создаёт сопроводительное письмо по вакансии и выбранному резюме через API пользователя.",
   "permissions": ["storage", "clipboardWrite", "activeTab"],
   "host_permissions": [
@@ -13,6 +13,12 @@
   "background": {
     "service_worker": "background.js"
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["vendor/pdf.worker.min.mjs"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "action": {
     "default_title": "Создать сопроводительное письмо",
     "default_popup": "popup.html"

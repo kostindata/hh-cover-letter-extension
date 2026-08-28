@@ -128,6 +128,96 @@
     return true;
   }
 
+  function createInlineGenerator(field) {
+    if (field.__hhCoverGeneratorHost?.isConnected) return;
+
+    const host = document.createElement("div");
+    host.dataset.hhCoverGenerator = "true";
+    field.__hhCoverGeneratorHost = host;
+    const shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML = `
+      <style>
+        :host { display: block; margin: 10px 0; font-family: Arial, sans-serif; }
+        .box { display: grid; grid-template-columns: minmax(150px, 1fr) auto; gap: 8px; align-items: end;
+          border: 1px solid #ddd; border-radius: 10px; background: #fff; padding: 10px; }
+        label { display: grid; gap: 5px; color: #555; font-size: 12px; }
+        select, button { min-height: 38px; border: 1px solid #c9c9c9; border-radius: 8px; font: 13px Arial, sans-serif; }
+        select { min-width: 0; background: #fff; padding: 0 9px; }
+        button { border-color: #d6001c; background: #d6001c; color: #fff; cursor: pointer; padding: 0 16px; font-weight: 700; }
+        button:disabled { cursor: wait; opacity: .65; }
+        .status { grid-column: 1 / -1; min-height: 15px; color: #666; font-size: 12px; line-height: 1.3; }
+        .status.error { color: #b42318; }
+        .status.success { color: #167443; }
+      </style>
+      <div class="box">
+        <label>Резюме<select aria-label="Резюме для сопроводительного письма"></select></label>
+        <button type="button">Сгенерировать письмо</button>
+        <div class="status" role="status"></div>
+      </div>`;
+
+    const select = shadow.querySelector("select");
+    const button = shadow.querySelector("button");
+    const status = shadow.querySelector(".status");
+    const setStatus = (text, type = "") => {
+      status.textContent = text;
+      status.className = `status ${type}`.trim();
+    };
+
+    async function loadResumes() {
+      const { resumes = [], lastResumeId = "" } = await chrome.storage.local.get(["resumes", "lastResumeId"]);
+      select.replaceChildren();
+      if (!resumes.length) {
+        select.add(new Option("Сначала загрузите резюме в расширение", ""));
+        button.disabled = true;
+        return;
+      }
+      for (const resume of resumes) select.add(new Option(resume.name, resume.id));
+      select.value = resumes.some((resume) => resume.id === lastResumeId) ? lastResumeId : resumes[0].id;
+      button.disabled = false;
+    }
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      setStatus("Генерирую…");
+      try {
+        const saved = await chrome.storage.local.get(["apiSettings", "resumes", "generationSettings"]);
+        const resume = (saved.resumes || []).find((item) => item.id === select.value);
+        const provider = saved.apiSettings?.provider;
+        const config = saved.apiSettings?.configs?.[provider];
+        if (!resume) throw new Error("Выберите загруженное резюме.");
+        if (!provider || !config?.apiKey || !config?.model) throw new Error("Сначала настройте API в расширении.");
+        const { vacancy } = await resolveVacancy();
+        if (!isCompleteVacancy(vacancy)) throw new Error("Не удалось прочитать вакансию.");
+        const response = await chrome.runtime.sendMessage({
+          type: "GENERATE_WITH_API",
+          payload: {
+            api: { provider, ...config },
+            vacancy,
+            resume,
+            tone: saved.generationSettings?.tone || "business",
+            extraInstructions: saved.generationSettings?.extraInstructions || ""
+          }
+        });
+        if (!response?.ok) throw new Error(response?.error || "API не вернул результат.");
+        if (!insertLetter(response.letter)) throw new Error("Поле сопроводительного письма больше не найдено.");
+        await chrome.storage.local.set({ lastResumeId: resume.id });
+        setStatus("Письмо вставлено в поле. Проверьте текст перед отправкой.", "success");
+      } catch (error) {
+        setStatus(error.message, "error");
+      } finally {
+        button.disabled = !select.value;
+      }
+    });
+
+    field.insertAdjacentElement("afterend", host);
+    loadResumes().catch((error) => setStatus(error.message, "error"));
+  }
+
+  function mountInlineGenerator() {
+    const field = findVisibleLetterField();
+    if (field) createInlineGenerator(field);
+  }
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === "GET_VACANCY") {
       resolveVacancy()
@@ -144,4 +234,8 @@
   if (location.pathname.startsWith("/vacancy/")) {
     cacheVacancy(getVacancyId(), getVacancy()).catch(() => {});
   }
+
+  mountInlineGenerator();
+  const observer = new MutationObserver(mountInlineGenerator);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
